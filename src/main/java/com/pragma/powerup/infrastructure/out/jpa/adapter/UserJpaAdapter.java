@@ -1,6 +1,6 @@
 package com.pragma.powerup.infrastructure.out.jpa.adapter;
 
-import com.pragma.powerup.domain.model.ObjectModel;
+import com.pragma.powerup.domain.model.UserModel;
 import com.pragma.powerup.domain.spi.IObjectPersistencePort;
 import com.pragma.powerup.infrastructure.exception.NoDataFoundException;
 import com.pragma.powerup.infrastructure.out.jpa.entity.ObjectEntity;
@@ -18,13 +18,13 @@ public class ObjectJpaAdapter implements IObjectPersistencePort {
 
 
     @Override
-    public ObjectModel saveObject(ObjectModel objectModel) {
-        ObjectEntity objectEntity = objectRepository.save(objectEntityMapper.toEntity(objectModel));
+    public UserModel saveObject(UserModel userModel) {
+        ObjectEntity objectEntity = objectRepository.save(objectEntityMapper.toEntity(userModel));
         return objectEntityMapper.toObjectModel(objectEntity);
     }
 
     @Override
-    public List<ObjectModel> getAllObjects() {
+    public List<UserModel> getAllObjects() {
         List<ObjectEntity> entityList = objectRepository.findAll();
         if (entityList.isEmpty()) {
             throw new NoDataFoundException();

@@ -5,8 +5,8 @@ import com.pragma.powerup.application.dto.response.ObjectResponseDto;
 import com.pragma.powerup.application.handler.IObjectHandler;
 import com.pragma.powerup.application.mapper.IObjectRequestMapper;
 import com.pragma.powerup.application.mapper.IObjectResponseMapper;
-import com.pragma.powerup.domain.api.IObjectServicePort;
-import com.pragma.powerup.domain.model.ObjectModel;
+import com.pragma.powerup.domain.api.IUserServicePort;
+import com.pragma.powerup.domain.model.UserModel;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,14 +18,14 @@ import java.util.List;
 @Transactional
 public class ObjectHandler implements IObjectHandler {
 
-    private final IObjectServicePort objectServicePort;
+    private final IUserServicePort objectServicePort;
     private final IObjectRequestMapper objectRequestMapper;
     private final IObjectResponseMapper objectResponseMapper;
 
     @Override
     public void saveObject(ObjectRequestDto objectRequestDto) {
-        ObjectModel objectModel = objectRequestMapper.toObject(objectRequestDto);
-        objectServicePort.saveObject(objectModel);
+        UserModel userModel = objectRequestMapper.toObject(objectRequestDto);
+        objectServicePort.saveObject(userModel);
     }
 
     @Override

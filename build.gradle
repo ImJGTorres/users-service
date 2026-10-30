@@ -46,6 +46,8 @@ dependencies {
 	annotationProcessor "org.projectlombok:lombok:${lombokVersion}"
 
 	implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:${openApiVersion}"
+
+	implementation "org.springframework.security:spring-security-crypto"
 }
 
 tasks.named('test') {

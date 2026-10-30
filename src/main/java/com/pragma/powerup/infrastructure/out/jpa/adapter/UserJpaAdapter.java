@@ -1,34 +1,34 @@
 package com.pragma.powerup.infrastructure.out.jpa.adapter;
 
 import com.pragma.powerup.domain.model.UserModel;
-import com.pragma.powerup.domain.spi.IObjectPersistencePort;
-import com.pragma.powerup.infrastructure.exception.NoDataFoundException;
-import com.pragma.powerup.infrastructure.out.jpa.entity.ObjectEntity;
-import com.pragma.powerup.infrastructure.out.jpa.mapper.IObjectEntityMapper;
-import com.pragma.powerup.infrastructure.out.jpa.repository.IObjectRepository;
+import com.pragma.powerup.domain.spi.IUserPersistencePort;
+import com.pragma.powerup.infrastructure.out.jpa.entity.UserEntity;
+import com.pragma.powerup.infrastructure.out.jpa.mapper.IUserEntityMapper;
+import com.pragma.powerup.infrastructure.out.jpa.repository.IUserRepository;
 import lombok.RequiredArgsConstructor;
 
 import java.util.List;
 
 @RequiredArgsConstructor
-public class ObjectJpaAdapter implements IObjectPersistencePort {
+public class UserJpaAdapter implements IUserPersistencePort {
 
-    private final IObjectRepository objectRepository;
-    private final IObjectEntityMapper objectEntityMapper;
-
+    private final IUserRepository userRepository;
+    private final IUserEntityMapper userEntityMapper;
 
     @Override
-    public UserModel saveObject(UserModel userModel) {
-        ObjectEntity objectEntity = objectRepository.save(objectEntityMapper.toEntity(userModel));
-        return objectEntityMapper.toObjectModel(objectEntity);
+    public UserModel saveUser(UserModel userModel) {
+        UserEntity userEntity = userRepository.save(userEntityMapper.toEntity(userModel));
+        return userEntityMapper.toModel(userEntity);
     }
 
     @Override
-    public List<UserModel> getAllObjects() {
-        List<ObjectEntity> entityList = objectRepository.findAll();
-        if (entityList.isEmpty()) {
-            throw new NoDataFoundException();
-        }
-        return objectEntityMapper.toObjectModelList(entityList);
+    public boolean existsByEmail(String email) {
+        return userRepository.existsByEmail(email);
     }
+
+    @Override
+    public boolean existsByIdentityDocument(String identityDocument) {
+        return userRepository.existsByIdentityDocument(identityDocument);
+    }
+
 }

@@ -5,15 +5,13 @@ import com.pragma.powerup.infrastructure.out.jpa.entity.UserEntity;
 import org.mapstruct.Mapper;
 import org.mapstruct.ReportingPolicy;
 
-import java.util.List;
 
 @Mapper(componentModel = "spring",
+        uses = IRoleEntityMapper.class,
         unmappedTargetPolicy = ReportingPolicy.IGNORE,
         unmappedSourcePolicy = ReportingPolicy.IGNORE
 )
-public interface IObjectEntityMapper {
-
+public interface IUserEntityMapper {
     UserEntity toEntity(UserModel user);
-    UserModel toObjectModel(UserEntity userEntity);
-    List<UserModel> toObjectModelList(List<UserEntity> userEntityList);
+    UserModel toModel(UserEntity userEntity);
 }

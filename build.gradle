@@ -57,3 +57,20 @@ tasks.named('test') {
 test {
 	finalizedBy jacocoTestReport
 }
+
+jacocoTestReport {
+	reports {
+		xml.required = true
+		html.required = true
+	}
+	classDirectories.setFrom(files(classDirectories.files.collect {
+		fileTree(dir: it, exclude: [
+				'**/*MapperImpl*',
+				'**/dto/**',
+				'**/configuration/**',
+				'**/documentation/**',
+				'**/entity/**',
+				'**/*Application*'
+		])
+	}))
+}

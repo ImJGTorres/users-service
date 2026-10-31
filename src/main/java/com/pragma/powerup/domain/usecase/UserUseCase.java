@@ -14,7 +14,7 @@ import java.time.Period;
 
 public class UserUseCase implements IUserServicePort {
     private static final int LEGAL_AGE = 18;
-    
+
     private final IUserPersistencePort userPersistencePort;
     private final IRolePersistencePort rolePersistencePort;
     private final IPasswordEncoderPort passwordEncoderPort;

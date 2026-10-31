@@ -11,14 +11,15 @@ import com.pragma.powerup.domain.spi.IUserPersistencePort;
 
 import java.time.LocalDate;
 import java.time.Period;
+import java.time.ZoneId;
 
 public class UserUseCase implements IUserServicePort {
     private static final int LEGAL_AGE = 18;
+    private static final ZoneId COLOMBIA_ZONE = ZoneId.of("America/Bogota");
 
     private final IUserPersistencePort userPersistencePort;
     private final IRolePersistencePort rolePersistencePort;
     private final IPasswordEncoderPort passwordEncoderPort;
-
 
     public UserUseCase(IUserPersistencePort userPersistencePort,
                        IRolePersistencePort rolePersistencePort,
@@ -38,7 +39,7 @@ public class UserUseCase implements IUserServicePort {
     }
 
     private void validateLegalAge(LocalDate birthDate) {
-        if (Period.between(birthDate, LocalDate.now()).getYears() < LEGAL_AGE) {
+        if (Period.between(birthDate, LocalDate.now(COLOMBIA_ZONE)).getYears() < LEGAL_AGE) {
             throw new UnderageUserException();
         }
     }

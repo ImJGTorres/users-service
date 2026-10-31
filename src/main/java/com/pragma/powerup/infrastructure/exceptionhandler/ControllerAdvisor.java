@@ -3,7 +3,6 @@ package com.pragma.powerup.infrastructure.exceptionhandler;
 import com.pragma.powerup.domain.exception.RoleNotFoundException;
 import com.pragma.powerup.domain.exception.UnderageUserException;
 import com.pragma.powerup.domain.exception.UserAlreadyExistsException;
-import com.pragma.powerup.infrastructure.exception.NoDataFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -17,13 +16,6 @@ import java.util.Map;
 @ControllerAdvice
 public class ControllerAdvisor {
     private static final String MESSAGE = "message";
-
-    @ExceptionHandler(NoDataFoundException.class)
-    public ResponseEntity<Map<String, String>> handleNoDataFoundException(
-            NoDataFoundException ignoredNoDataFoundException) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(Collections.singletonMap(MESSAGE, ExceptionResponse.NO_DATA_FOUND.getMessage()));
-    }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, String>> handleValidationException(

@@ -26,10 +26,10 @@ public class UserEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 50)
     private String name;
 
-    @Column(name = "last_name", nullable = false)
+    @Column(name = "last_name", nullable = false, length = 50)
     private String lastName;
 
     @Column(name = "identity_document", nullable = false, unique = true, length = 20)
@@ -41,13 +41,13 @@ public class UserEntity {
     @Column(name = "birth_date", nullable = false)
     private LocalDate birthDate;
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false, unique = true, length = 100)
     private String email;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 100)
     private String password;
 
-    @ManyToOne
+    @ManyToOne(optional = false)
     @JoinColumn(name = "role_id", nullable = false)
     private RoleEntity role;
 }

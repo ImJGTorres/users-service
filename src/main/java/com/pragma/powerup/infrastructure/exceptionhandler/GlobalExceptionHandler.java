@@ -6,15 +6,15 @@ import com.pragma.powerup.domain.exception.UserAlreadyExistsException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
-import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-@ControllerAdvice
-public class ControllerAdvisor {
+@RestControllerAdvice
+public class GlobalExceptionHandler {
     private static final String MESSAGE = "message";
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

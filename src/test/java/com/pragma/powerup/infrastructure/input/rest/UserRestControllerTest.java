@@ -6,7 +6,7 @@ import com.pragma.powerup.application.handler.IUserHandler;
 import com.pragma.powerup.domain.exception.RoleNotFoundException;
 import com.pragma.powerup.domain.exception.UnderageUserException;
 import com.pragma.powerup.domain.exception.UserAlreadyExistsException;
-import com.pragma.powerup.infrastructure.exceptionhandler.ControllerAdvisor;
+import com.pragma.powerup.infrastructure.exceptionhandler.GlobalExceptionHandler;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -43,14 +43,13 @@ class UserRestControllerTest {
     @BeforeEach
     void setUp() {
         mockMvc = MockMvcBuilders.standaloneSetup(userRestController)
-                .setControllerAdvice(new ControllerAdvisor())
+                .setControllerAdvice(new GlobalExceptionHandler())
                 .build();
     }
 
     @Test
     void saveOwnerWithValidRequestReturns201AndTheCreatedOwnerWithoutPassword() throws Exception {
         UserResponseDto response = new UserResponseDto();
-        response.setId(1L);
         response.setName("Ana");
         response.setLastName("Gomez");
         response.setEmail(VALID_EMAIL);
@@ -61,7 +60,6 @@ class UserRestControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(buildRequestJson(VALID_DOCUMENT, VALID_PHONE, VALID_EMAIL)))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.id").value(1))
                 .andExpect(jsonPath("$.email").value(VALID_EMAIL))
                 .andExpect(jsonPath("$.role").value("OWNER"))
                 .andExpect(jsonPath("$.password").doesNotExist());

@@ -7,6 +7,8 @@ import com.pragma.powerup.infrastructure.out.jpa.mapper.IUserEntityMapper;
 import com.pragma.powerup.infrastructure.out.jpa.repository.IUserRepository;
 import lombok.RequiredArgsConstructor;
 
+import java.util.Optional;
+
 @RequiredArgsConstructor
 public class UserJpaAdapter implements IUserPersistencePort {
 
@@ -17,6 +19,10 @@ public class UserJpaAdapter implements IUserPersistencePort {
     public UserModel saveUser(UserModel userModel) {
         UserEntity userEntity = userRepository.save(userEntityMapper.toEntity(userModel));
         return userEntityMapper.toModel(userEntity);
+    }
+
+    public Optional<UserModel> findUserById(Long id) {
+        return userRepository.findById(id).map(userEntityMapper::toModel);
     }
 
     @Override

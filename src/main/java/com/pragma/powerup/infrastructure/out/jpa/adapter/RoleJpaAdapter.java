@@ -10,12 +10,13 @@ import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 public class RoleJpaAdapter implements IRolePersistencePort {
+    private static final String ROLE_NOT_FOUND_MESSAGE = "The requested role does not exist";
     private final IRoleRepository roleRepository;
     private final IRoleEntityMapper roleEntityMapper;
 
     @Override
     public RoleModel getRoleByName(RoleName roleName) {
         return roleEntityMapper.toModel(roleRepository.findByName(roleName.name())
-                .orElseThrow(RoleNotFoundException::new));
+                .orElseThrow(() -> new RoleNotFoundException(ROLE_NOT_FOUND_MESSAGE)));
     }
 }

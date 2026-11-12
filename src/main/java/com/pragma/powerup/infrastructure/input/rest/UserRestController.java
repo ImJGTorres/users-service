@@ -2,6 +2,7 @@ package com.pragma.powerup.infrastructure.input.rest;
 
 import com.pragma.powerup.application.dto.request.UserRequestDto;
 import com.pragma.powerup.application.dto.response.UserResponseDto;
+import com.pragma.powerup.application.dto.response.UserRoleResponseDto;
 import com.pragma.powerup.application.handler.IUserHandler;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -12,6 +13,8 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -38,4 +41,17 @@ public class UserRestController {
         return ResponseEntity.status(HttpStatus.CREATED).body(userHandler.saveOwner(userRequestDto));
     }
 
+
+    @Operation(summary = "Get the id and role of a user")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "User found",
+            content = @Content(mediaType = "application/json",
+            schema = @Schema(implementation = UserRoleResponseDto.class))),
+            @ApiResponse(responseCode = "404", description = "User not found",
+                    content = @Content)
+    })
+    @GetMapping(value = "/users/{id}", produces = "application/json")
+    public ResponseEntity<UserRoleResponseDto> getUserById(@PathVariable Long id) {
+        return ResponseEntity.ok(userHandler.getUserById(id));
+    }
 }

@@ -2,10 +2,12 @@ package com.pragma.powerup.infrastructure.input.rest;
 
 import com.pragma.powerup.application.dto.request.UserRequestDto;
 import com.pragma.powerup.application.dto.response.UserResponseDto;
+import com.pragma.powerup.application.dto.response.UserRoleResponseDto;
 import com.pragma.powerup.application.handler.IUserHandler;
 import com.pragma.powerup.domain.exception.RoleNotFoundException;
 import com.pragma.powerup.domain.exception.UnderageUserException;
 import com.pragma.powerup.domain.exception.UserAlreadyExistsException;
+import com.pragma.powerup.domain.exception.UserNotFoundException;
 import com.pragma.powerup.infrastructure.exceptionhandler.GlobalExceptionHandler;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -20,6 +22,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -28,6 +31,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class UserRestControllerTest {
 
     private static final String OWNERS_URL = "/api/v1/owners";
+    private static final String USER_BY_ID_URL = "/api/v1/users/{id}";
     private static final String VALID_DOCUMENT = "1234567890";
     private static final String VALID_PHONE = "+573005698325";
     private static final String VALID_EMAIL = "ana.gomez@correo.com";
@@ -117,7 +121,7 @@ class UserRestControllerTest {
 
     @Test
     void saveOwnerWhenUserIsUnderageReturns400WithTheDomainMessage() throws Exception {
-        when(userHandler.saveOwner(any(UserRequestDto.class))).thenThrow(new UnderageUserException());
+        when(userHandler.saveOwner(any(UserRequestDto.class))).thenThrow(new UnderageUserException("The user must be of legal age"));
 
         mockMvc.perform(post(OWNERS_URL)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -140,7 +144,7 @@ class UserRestControllerTest {
 
     @Test
     void saveOwnerWhenOwnerRoleIsMissingReturns404() throws Exception {
-        when(userHandler.saveOwner(any(UserRequestDto.class))).thenThrow(new RoleNotFoundException());
+        when(userHandler.saveOwner(any(UserRequestDto.class))).thenThrow(new RoleNotFoundException("The requested role does not exist"));
 
         mockMvc.perform(post(OWNERS_URL)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -161,5 +165,39 @@ class UserRestControllerTest {
                   "password": "Clave12345"
                 }
                 """.formatted(identityDocument, phone, email);
+    }
+
+    @Test
+    void getUserByIdWhenUserExistsReturns200WithIdAndRoleOnly() throws Exception {
+        UserRoleResponseDto response = new UserRoleResponseDto();
+        response.setId(1L);
+        response.setRole("OWNER");
+        when(userHandler.getUserById(1L)).thenReturn(response);
+
+        mockMvc.perform(get(USER_BY_ID_URL, 1L))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1))
+                .andExpect(jsonPath("$.role").value("OWNER"))
+                .andExpect(jsonPath("$.email").doesNotExist())
+                .andExpect(jsonPath("$.password").doesNotExist());
+    }
+
+    @Test
+    void getUserByIdWhenUserDoesNotExistReturns404WithTheDomainMessage() throws Exception {
+        when(userHandler.getUserById(99L))
+                .thenThrow(new UserNotFoundException("The requested user does not exist"));
+
+        mockMvc.perform(get(USER_BY_ID_URL, 99L))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("The requested user does not exist"));
+    }
+
+    @Test
+    void getUserByIdWithNonNumericIdReturns400() throws Exception {
+        mockMvc.perform(get(USER_BY_ID_URL, "abc"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Invalid value for parameter 'id'"));
+
+        verifyNoInteractions(userHandler);
     }
 }

@@ -3,6 +3,7 @@ package com.pragma.powerup.domain.usecase;
 import com.pragma.powerup.domain.exception.RoleNotFoundException;
 import com.pragma.powerup.domain.exception.UnderageUserException;
 import com.pragma.powerup.domain.exception.UserAlreadyExistsException;
+import com.pragma.powerup.domain.exception.UserNotFoundException;
 import com.pragma.powerup.domain.model.RoleModel;
 import com.pragma.powerup.domain.model.RoleName;
 import com.pragma.powerup.domain.model.UserModel;
@@ -16,6 +17,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -127,7 +129,7 @@ class UserUseCaseTest {
     @Test
     void saveOwnerWhenOwnerRoleDoesNotExistThrowsRoleNotFoundException() {
         UserModel user = buildUserBornOn(LocalDate.now().minusYears(30));
-        when(rolePersistencePort.getRoleByName(RoleName.OWNER)).thenThrow(new RoleNotFoundException());
+        when(rolePersistencePort.getRoleByName(RoleName.OWNER)).thenThrow(new RoleNotFoundException("The requested role does not exist"));
 
         assertThrows(RoleNotFoundException.class, () -> userUseCase.saveOwner(user));
 
@@ -135,19 +137,23 @@ class UserUseCaseTest {
         verifyNoInteractions(passwordEncoderPort);
     }
 
+    @Test
+    void getUserByIdWhenUserExistsReturnsTheUser() {
+        UserModel user = new UserModel();
+        when(userPersistencePort.findUserById(1L)).thenReturn(Optional.of(user));
 
+        UserModel result = userUseCase.getUserById(1L);
 
+        assertSame(user, result);
+    }
 
+    @Test
+    void getUserByIdWhenUserDoesNotExistThrowsUserNotFoundException() {
+        when(userPersistencePort.findUserById(99L)).thenReturn(Optional.empty());
 
+        UserNotFoundException exception = assertThrows(
+                UserNotFoundException.class, () -> userUseCase.getUserById(99L));
 
-
-
-
-
-
-
-
-
-
-
+        assertEquals("The requested user does not exist", exception.getMessage());
+    }
 }

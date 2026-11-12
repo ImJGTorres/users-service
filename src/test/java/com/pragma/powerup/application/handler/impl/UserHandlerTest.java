@@ -2,10 +2,12 @@ package com.pragma.powerup.application.handler.impl;
 
 import com.pragma.powerup.application.dto.request.UserRequestDto;
 import com.pragma.powerup.application.dto.response.UserResponseDto;
+import com.pragma.powerup.application.dto.response.UserRoleResponseDto;
 import com.pragma.powerup.application.mapper.IUserRequestMapper;
 import com.pragma.powerup.application.mapper.IUserResponseMapper;
 import com.pragma.powerup.domain.api.IUserServicePort;
 import com.pragma.powerup.domain.exception.UserAlreadyExistsException;
+import com.pragma.powerup.domain.exception.UserNotFoundException;
 import com.pragma.powerup.domain.model.UserModel;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -63,16 +65,26 @@ class UserHandlerTest {
         verifyNoInteractions(userResponseMapper);
     }
 
+    @Test
+    void getUserByIdCallsServicePortAndReturnsMappedRoleResponse() {
+        UserModel user = new UserModel();
+        UserRoleResponseDto expectedResponse = new UserRoleResponseDto();
+        when(userServicePort.getUserById(1L)).thenReturn(user);
+        when(userResponseMapper.toRoleResponse(user)).thenReturn(expectedResponse);
 
+        UserRoleResponseDto result = userHandler.getUserById(1L);
 
+        assertSame(expectedResponse, result);
+        verify(userServicePort).getUserById(1L);
+    }
 
+    @Test
+    void getUserByIdWhenServicePortThrowsPropagatesExceptionWithoutMappingResponse() {
+        when(userServicePort.getUserById(99L))
+                .thenThrow(new UserNotFoundException("The requested user does not exist"));
 
+        assertThrows(UserNotFoundException.class, () -> userHandler.getUserById(99L));
 
-
-
-
-
-
-
-
+        verifyNoInteractions(userResponseMapper);
+    }
 }

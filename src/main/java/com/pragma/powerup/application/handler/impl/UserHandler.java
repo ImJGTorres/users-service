@@ -2,6 +2,7 @@ package com.pragma.powerup.application.handler.impl;
 
 import com.pragma.powerup.application.dto.request.UserRequestDto;
 import com.pragma.powerup.application.dto.response.UserResponseDto;
+import com.pragma.powerup.application.dto.response.UserRoleResponseDto;
 import com.pragma.powerup.application.handler.IUserHandler;
 import com.pragma.powerup.application.mapper.IUserRequestMapper;
 import com.pragma.powerup.application.mapper.IUserResponseMapper;
@@ -24,5 +25,10 @@ public class UserHandler implements IUserHandler {
     public UserResponseDto saveOwner(UserRequestDto userRequestDto) {
         UserModel userModel = userRequestMapper.toUser(userRequestDto);
         return userResponseMapper.toResponse(userServicePort.saveOwner(userModel));
+    }
+
+    @Override
+    public UserRoleResponseDto getUserById(Long id) {
+        return userResponseMapper.toRoleResponse(userServicePort.getUserById(id));
     }
 }

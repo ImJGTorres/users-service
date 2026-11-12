@@ -3,6 +3,7 @@ package com.pragma.powerup.domain.usecase;
 import com.pragma.powerup.domain.api.IUserServicePort;
 import com.pragma.powerup.domain.exception.UnderageUserException;
 import com.pragma.powerup.domain.exception.UserAlreadyExistsException;
+import com.pragma.powerup.domain.exception.UserNotFoundException;
 import com.pragma.powerup.domain.model.RoleName;
 import com.pragma.powerup.domain.model.UserModel;
 import com.pragma.powerup.domain.spi.IPasswordEncoderPort;
@@ -16,6 +17,8 @@ import java.time.ZoneId;
 public class UserUseCase implements IUserServicePort {
     private static final int LEGAL_AGE = 18;
     private static final ZoneId COLOMBIA_ZONE = ZoneId.of("America/Bogota");
+    private static final String UNDERAGE_MESSAGE = "The user must be of legal age";
+    private static final String USER_NOT_FOUND_MESSAGE = "The requested user does not exist";
 
     private final IUserPersistencePort userPersistencePort;
     private final IRolePersistencePort rolePersistencePort;
@@ -38,9 +41,15 @@ public class UserUseCase implements IUserServicePort {
         return userPersistencePort.saveUser(userModel);
     }
 
+    @Override
+    public UserModel getUserById(Long id) {
+        return userPersistencePort.findUserById(id)
+                .orElseThrow(() -> new UserNotFoundException(USER_NOT_FOUND_MESSAGE));
+    }
+
     private void validateLegalAge(LocalDate birthDate) {
         if (Period.between(birthDate, LocalDate.now(COLOMBIA_ZONE)).getYears() < LEGAL_AGE) {
-            throw new UnderageUserException();
+            throw new UnderageUserException(UNDERAGE_MESSAGE);
         }
     }
 

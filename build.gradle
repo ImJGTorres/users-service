@@ -27,6 +27,7 @@ ext {
 	lombokVersion = "1.18.48"
 	lombokMapstructBindingVersion = "0.2.0"
 	openApiVersion = "2.10.0"
+	jjwtVersion = "0.13.0"
 }
 
 dependencies {
@@ -47,7 +48,10 @@ dependencies {
 
 	implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:${openApiVersion}"
 
-	implementation "org.springframework.security:spring-security-crypto"
+	implementation "org.springframework.boot:spring-boot-starter-security"
+	implementation "io.jsonwebtoken:jjwt-api:${jjwtVersion}"
+	runtimeOnly "io.jsonwebtoken:jjwt-impl:${jjwtVersion}"
+	runtimeOnly "io.jsonwebtoken:jjwt-jackson:${jjwtVersion}"
 }
 
 tasks.named('test') {

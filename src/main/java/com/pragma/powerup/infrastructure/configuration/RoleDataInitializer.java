@@ -6,10 +6,12 @@ import com.pragma.powerup.infrastructure.out.jpa.repository.IRoleRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
+@Order(1)
 public class RoleDataInitializer implements ApplicationRunner {
     private final IRoleRepository roleRepository;
     @Override

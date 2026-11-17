@@ -12,4 +12,6 @@ public interface IUserPersistencePort {
     boolean existsByIdentityDocument(String identityDocument);
 
     Optional<UserModel> findUserById(Long id);
+
+    Optional<UserModel> findUserByEmail(String email);
 }

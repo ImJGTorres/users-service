@@ -1,9 +1,12 @@
 package com.pragma.powerup.infrastructure.configuration;
 
+import com.pragma.powerup.domain.api.IAuthServicePort;
 import com.pragma.powerup.domain.api.IUserServicePort;
 import com.pragma.powerup.domain.spi.IPasswordEncoderPort;
 import com.pragma.powerup.domain.spi.IRolePersistencePort;
+import com.pragma.powerup.domain.spi.ITokenPort;
 import com.pragma.powerup.domain.spi.IUserPersistencePort;
+import com.pragma.powerup.domain.usecase.AuthUseCase;
 import com.pragma.powerup.domain.usecase.UserUseCase;
 import com.pragma.powerup.infrastructure.out.jpa.adapter.RoleJpaAdapter;
 import com.pragma.powerup.infrastructure.out.jpa.adapter.UserJpaAdapter;
@@ -11,8 +14,10 @@ import com.pragma.powerup.infrastructure.out.jpa.mapper.IRoleEntityMapper;
 import com.pragma.powerup.infrastructure.out.jpa.mapper.IUserEntityMapper;
 import com.pragma.powerup.infrastructure.out.jpa.repository.IRoleRepository;
 import com.pragma.powerup.infrastructure.out.jpa.repository.IUserRepository;
+import com.pragma.powerup.infrastructure.out.security.JwtAdapter;
 import com.pragma.powerup.infrastructure.out.security.PasswordEncoderAdapter;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -49,5 +54,16 @@ public class BeanConfiguration {
     @Bean
     public IUserServicePort userServicePort() {
         return new UserUseCase(userPersistencePort(), rolePersistencePort(), passwordEncoderPort());
+    }
+
+    @Bean
+    public JwtAdapter jwtAdapter(@Value("${jwt.secret}") String secret,
+                                 @Value("${jwt.expiration-minutes}") long expirationMinutes) {
+        return new JwtAdapter(secret, expirationMinutes);
+    }
+
+    @Bean
+    public IAuthServicePort authServicePort(ITokenPort tokenPort) {
+        return new AuthUseCase(userPersistencePort(), passwordEncoderPort(), tokenPort);
     }
 }

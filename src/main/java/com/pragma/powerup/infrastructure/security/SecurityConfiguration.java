@@ -5,12 +5,10 @@ import com.pragma.powerup.infrastructure.out.security.JwtAdapter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
@@ -25,7 +23,8 @@ public class SecurityConfiguration {
         http.csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .exceptionHandling(handling -> handling
-                        .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
+                        .authenticationEntryPoint(new JsonAuthenticationEntryPoint())
+                        .accessDeniedHandler(new JsonAccessDeniedHandler()))
                 .authorizeHttpRequests(requests -> requests
                         .requestMatchers(HttpMethod.POST, LOGIN_URL).permitAll()
                         .requestMatchers(SWAGGER_URLS).permitAll()

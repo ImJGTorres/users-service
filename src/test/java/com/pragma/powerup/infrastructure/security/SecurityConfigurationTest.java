@@ -72,7 +72,8 @@ class SecurityConfigurationTest {
         mockMvc.perform(post(OWNERS_URL)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{}"))
-                .andExpect(status().isUnauthorized());
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.message").value("Authentication is required: send a valid token"));
     }
 
     @Test
@@ -81,7 +82,8 @@ class SecurityConfigurationTest {
                         .header(AUTHORIZATION, bearerTokenFor("OWNER"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{}"))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.message").value("You do not have permission to perform this action"));
     }
 
     @Test
@@ -114,7 +116,8 @@ class SecurityConfigurationTest {
     @Test
     void getUserByIdWithAnInvalidTokenReturns401() throws Exception {
         mockMvc.perform(get(USER_URL).header(AUTHORIZATION, "Bearer not-a-token"))
-                .andExpect(status().isUnauthorized());
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.message").value("Authentication is required: send a valid token"));
     }
 
     @Test

@@ -34,11 +34,12 @@ public class UserUseCase implements IUserServicePort {
 
     @Override
     public UserModel saveOwner(UserModel userModel) {
-        validateLegalAge(userModel.getBirthDate());
-        validateUniqueness(userModel);
-        userModel.setRole(rolePersistencePort.getRoleByName(RoleName.OWNER));
-        userModel.setPassword(passwordEncoderPort.encode(userModel.getPassword()));
-        return userPersistencePort.saveUser(userModel);
+        return saveUserWithRole(userModel, RoleName.OWNER);
+    }
+
+    @Override
+    public UserModel saveEmployee(UserModel userModel) {
+        return saveUserWithRole(userModel, RoleName.EMPLOYEE);
     }
 
     @Override
@@ -47,13 +48,21 @@ public class UserUseCase implements IUserServicePort {
                 .orElseThrow(() -> new UserNotFoundException(USER_NOT_FOUND_MESSAGE));
     }
 
+    private UserModel saveUserWithRole(UserModel userModel, RoleName roleName) {
+        validateLegalAge(userModel.getBirthDate());
+        validateUniqueness(userModel);
+        userModel.setRole(rolePersistencePort.getRoleByName(roleName));
+        userModel.setPassword(passwordEncoderPort.encode(userModel.getPassword()));
+        return userPersistencePort.saveUser(userModel);
+    }
+
     private void validateLegalAge(LocalDate birthDate) {
         if (Period.between(birthDate, LocalDate.now(COLOMBIA_ZONE)).getYears() < LEGAL_AGE) {
             throw new UnderageUserException(UNDERAGE_MESSAGE);
         }
     }
 
-    //se valida unicidad para que no existan dos propietarios iguales
+    //se valida unicidad para que no existan dos usuarios iguales
     private void validateUniqueness(UserModel userModel) {
         if (userPersistencePort.existsByEmail(userModel.getEmail())) {
             throw new UserAlreadyExistsException("A user with this email already exists");

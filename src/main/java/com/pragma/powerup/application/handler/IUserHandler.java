@@ -7,5 +7,7 @@ import com.pragma.powerup.application.dto.response.UserRoleResponseDto;
 public interface IUserHandler {
     UserResponseDto saveOwner(UserRequestDto userRequestDto);
 
+    UserResponseDto saveEmployee(UserRequestDto userRequestDto);
+
     UserRoleResponseDto getUserById(Long id);
 }

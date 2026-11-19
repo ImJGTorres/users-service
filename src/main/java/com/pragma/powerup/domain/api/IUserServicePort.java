@@ -7,5 +7,7 @@ public interface IUserServicePort {
 
     UserModel saveOwner(UserModel userModel);
 
+    UserModel saveEmployee(UserModel userModel);
+
     UserModel getUserById(Long id);
 }

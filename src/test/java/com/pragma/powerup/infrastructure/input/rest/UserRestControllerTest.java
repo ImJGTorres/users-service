@@ -20,6 +20,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -31,6 +33,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class UserRestControllerTest {
 
     private static final String OWNERS_URL = "/api/v1/owners";
+    private static final String EMPLOYEES_URL = "/api/v1/employees";
     private static final String USER_BY_ID_URL = "/api/v1/users/{id}";
     private static final String VALID_DOCUMENT = "1234567890";
     private static final String VALID_PHONE = "+573005698325";
@@ -151,6 +154,78 @@ class UserRestControllerTest {
                         .content(buildRequestJson(VALID_DOCUMENT, VALID_PHONE, VALID_EMAIL)))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message").value("The requested role does not exist"));
+    }
+
+    @Test
+    void saveEmployeeWithValidRequestReturns201AndTheCreatedEmployeeWithoutPassword() throws Exception {
+        UserResponseDto response = new UserResponseDto();
+        response.setName("Ana");
+        response.setLastName("Gomez");
+        response.setEmail(VALID_EMAIL);
+        response.setRole("EMPLOYEE");
+        when(userHandler.saveEmployee(any(UserRequestDto.class))).thenReturn(response);
+
+        mockMvc.perform(post(EMPLOYEES_URL)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(buildRequestJson(VALID_DOCUMENT, VALID_PHONE, VALID_EMAIL)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.email").value(VALID_EMAIL))
+                .andExpect(jsonPath("$.role").value("EMPLOYEE"))
+                .andExpect(jsonPath("$.password").doesNotExist());
+
+        verify(userHandler, never()).saveOwner(any());
+    }
+
+    @Test
+    void saveEmployeeWithNonNumericIdentityDocumentReturns400() throws Exception {
+        mockMvc.perform(post(EMPLOYEES_URL)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(buildRequestJson("12345ABC", VALID_PHONE, VALID_EMAIL)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.identityDocument").value("must contain only digits"));
+
+        verifyNoInteractions(userHandler);
+    }
+
+    @Test
+    void saveEmployeeWithEmptyBodyReturns400ReportingEveryRequiredField() throws Exception {
+        mockMvc.perform(post(EMPLOYEES_URL)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.name").exists())
+                .andExpect(jsonPath("$.lastName").exists())
+                .andExpect(jsonPath("$.identityDocument").exists())
+                .andExpect(jsonPath("$.phone").exists())
+                .andExpect(jsonPath("$.birthDate").exists())
+                .andExpect(jsonPath("$.email").exists())
+                .andExpect(jsonPath("$.password").exists());
+
+        verifyNoInteractions(userHandler);
+    }
+
+    @Test
+    void saveEmployeeWhenUserIsUnderageReturns400WithTheDomainMessage() throws Exception {
+        when(userHandler.saveEmployee(any(UserRequestDto.class)))
+                .thenThrow(new UnderageUserException("The user must be of legal age"));
+
+        mockMvc.perform(post(EMPLOYEES_URL)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(buildRequestJson(VALID_DOCUMENT, VALID_PHONE, VALID_EMAIL)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("The user must be of legal age"));
+    }
+
+    @Test
+    void saveEmployeeWhenUserAlreadyExistsReturns409WithTheDomainMessage() throws Exception {
+        when(userHandler.saveEmployee(any(UserRequestDto.class)))
+                .thenThrow(new UserAlreadyExistsException("A user with this email already exists"));
+
+        mockMvc.perform(post(EMPLOYEES_URL)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(buildRequestJson(VALID_DOCUMENT, VALID_PHONE, VALID_EMAIL)))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message").value("A user with this email already exists"));
     }
 
     private String buildRequestJson(String identityDocument, String phone, String email) {

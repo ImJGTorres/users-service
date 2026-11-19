@@ -15,6 +15,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfiguration {
     private static final String LOGIN_URL = "/api/v1/auth/login";
     private static final String OWNERS_URL = "/api/v1/owners";
+    private static final String EMPLOYEES_URL = "/api/v1/employees";
     private static final String ERROR_URL = "/error";
     private static final String[] SWAGGER_URLS = {"/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**"};
 
@@ -30,6 +31,7 @@ public class SecurityConfiguration {
                         .requestMatchers(SWAGGER_URLS).permitAll()
                         .requestMatchers(ERROR_URL).permitAll()
                         .requestMatchers(HttpMethod.POST, OWNERS_URL).hasRole(RoleName.ADMIN.name())
+                        .requestMatchers(HttpMethod.POST, EMPLOYEES_URL).hasRole(RoleName.OWNER.name())
                         .anyRequest().authenticated())
                 .addFilterBefore(new JwtAuthenticationFilter(jwtAdapter), UsernamePasswordAuthenticationFilter.class);
         return http.build();

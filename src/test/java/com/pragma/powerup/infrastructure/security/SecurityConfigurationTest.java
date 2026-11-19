@@ -31,6 +31,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Import({SecurityConfiguration.class, SecurityConfigurationTest.JwtTestConfiguration.class})
 class SecurityConfigurationTest {
     private static final String OWNERS_URL = "/api/v1/owners";
+    private static final String EMPLOYEES_URL = "/api/v1/employees";
     private static final String USER_URL = "/api/v1/users/1";
     private static final String LOGIN_URL = "/api/v1/auth/login";
     private static final String AUTHORIZATION = "Authorization";
@@ -90,6 +91,43 @@ class SecurityConfigurationTest {
     void postOwnersWithAdminTokenPassesSecurityAndReachesTheValidation() throws Exception {
         mockMvc.perform(post(OWNERS_URL)
                         .header(AUTHORIZATION, bearerTokenFor("ADMIN"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void postEmployeesWithoutTokenReturns401() throws Exception {
+        mockMvc.perform(post(EMPLOYEES_URL)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.message").value("Authentication is required: send a valid token"));
+    }
+
+    @Test
+    void postEmployeesWithAdminTokenReturns403() throws Exception {
+        mockMvc.perform(post(EMPLOYEES_URL)
+                        .header(AUTHORIZATION, bearerTokenFor("ADMIN"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.message").value("You do not have permission to perform this action"));
+    }
+
+    @Test
+    void postEmployeesWithEmployeeTokenReturns403() throws Exception {
+        mockMvc.perform(post(EMPLOYEES_URL)
+                        .header(AUTHORIZATION, bearerTokenFor("EMPLOYEE"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void postEmployeesWithOwnerTokenPassesSecurityAndReachesTheValidation() throws Exception {
+        mockMvc.perform(post(EMPLOYEES_URL)
+                        .header(AUTHORIZATION, bearerTokenFor("OWNER"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{}"))
                 .andExpect(status().isBadRequest());

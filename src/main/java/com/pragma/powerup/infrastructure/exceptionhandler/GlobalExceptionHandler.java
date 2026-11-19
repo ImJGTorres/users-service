@@ -7,6 +7,7 @@ import com.pragma.powerup.domain.exception.UserAlreadyExistsException;
 import com.pragma.powerup.domain.exception.UserNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -20,6 +21,7 @@ import java.util.Map;
 public class GlobalExceptionHandler {
     private static final String MESSAGE = "message";
     private static final String INVALID_PARAMETER_MESSAGE = "Invalid value for parameter '%s'";
+    private static final String MALFORMED_REQUEST_MESSAGE = "Malformed or invalid JSON request";
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, String>> handleValidationException(
@@ -64,6 +66,12 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(Collections.singletonMap(MESSAGE,
                         String.format(INVALID_PARAMETER_MESSAGE, exception.getName())));
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<Map<String, String>> handleUnreadableBodyException() {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(Collections.singletonMap(MESSAGE, MALFORMED_REQUEST_MESSAGE));
     }
 
     @ExceptionHandler(InvalidCredentialsException.class)

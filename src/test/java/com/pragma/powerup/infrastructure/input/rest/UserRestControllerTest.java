@@ -228,6 +228,30 @@ class UserRestControllerTest {
                 .andExpect(jsonPath("$.message").value("A user with this email already exists"));
     }
 
+    @Test
+    void saveOwnerWithBrokenJsonReturns400WithAShortMessageAndNoInternalDetails() throws Exception {
+        mockMvc.perform(post(OWNERS_URL)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\": "))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Malformed or invalid JSON request"))
+                .andExpect(jsonPath("$.trace").doesNotExist());
+
+        verifyNoInteractions(userHandler);
+    }
+
+    @Test
+    void saveEmployeeWithAWrongTypeReturns400WithAShortMessageAndNoInternalDetails() throws Exception {
+        mockMvc.perform(post(EMPLOYEES_URL)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\": \"Ana\", \"birthDate\": \"not-a-date\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Malformed or invalid JSON request"))
+                .andExpect(jsonPath("$.trace").doesNotExist());
+
+        verifyNoInteractions(userHandler);
+    }
+
     private String buildRequestJson(String identityDocument, String phone, String email) {
         return """
                 {

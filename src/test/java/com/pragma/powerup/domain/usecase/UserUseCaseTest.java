@@ -138,6 +138,83 @@ class UserUseCaseTest {
     }
 
     @Test
+    void saveEmployeeWithValidDataAssignsEmployeeRoleAndEncodesPassword() {
+        UserModel user = buildUserBornOn(LocalDate.now().minusYears(30));
+        RoleModel employeeRole = new RoleModel(3L, "EMPLOYEE", "Role EMPLOYEE");
+        when(rolePersistencePort.getRoleByName(RoleName.EMPLOYEE)).thenReturn(employeeRole);
+        when(passwordEncoderPort.encode(RAW_PASSWORD)).thenReturn(ENCODED_PASSWORD);
+        when(userPersistencePort.saveUser(user)).thenReturn(user);
+
+        UserModel result = userUseCase.saveEmployee(user);
+
+        assertAll(
+                () -> assertSame(employeeRole, result.getRole()),
+                () -> assertEquals(ENCODED_PASSWORD, result.getPassword())
+        );
+        verify(userPersistencePort).saveUser(user);
+    }
+
+    @Test
+    void saveEmployeeTurningExactlyLegalAgeIsAccepted() {
+        UserModel user = buildUserBornOn(LocalDate.now().minusYears(LEGAL_AGE));
+        when(rolePersistencePort.getRoleByName(RoleName.EMPLOYEE))
+                .thenReturn(new RoleModel(3L, "EMPLOYEE", "Role EMPLOYEE"));
+        when(passwordEncoderPort.encode(RAW_PASSWORD)).thenReturn(ENCODED_PASSWORD);
+        when(userPersistencePort.saveUser(user)).thenReturn(user);
+
+        UserModel result = userUseCase.saveEmployee(user);
+
+        assertSame(user, result);
+    }
+
+    @Test
+    void saveEmployeeOneDayBeforeLegalAgeThrowsUnderageUserException() {
+        UserModel user = buildUserBornOn(LocalDate.now().minusYears(LEGAL_AGE).plusDays(1));
+
+        assertThrows(UnderageUserException.class, () -> userUseCase.saveEmployee(user));
+        verify(userPersistencePort, never()).saveUser(any());
+        verifyNoInteractions(rolePersistencePort, passwordEncoderPort);
+    }
+
+    @Test
+    void saveEmployeeWithExistingEmailThrowsUserAlreadyExistsException() {
+        UserModel user = buildUserBornOn(LocalDate.now().minusYears(30));
+        when(userPersistencePort.existsByEmail(user.getEmail())).thenReturn(true);
+
+        UserAlreadyExistsException exception = assertThrows(
+                UserAlreadyExistsException.class, () -> userUseCase.saveEmployee(user));
+
+        assertEquals("A user with this email already exists", exception.getMessage());
+        verify(userPersistencePort, never()).saveUser(any());
+        verifyNoInteractions(rolePersistencePort, passwordEncoderPort);
+    }
+
+    @Test
+    void saveEmployeeWithExistingIdentityDocumentThrowsUserAlreadyExistsException() {
+        UserModel user = buildUserBornOn(LocalDate.now().minusYears(30));
+        when(userPersistencePort.existsByIdentityDocument(user.getIdentityDocument())).thenReturn(true);
+
+        UserAlreadyExistsException exception = assertThrows(
+                UserAlreadyExistsException.class, () -> userUseCase.saveEmployee(user));
+
+        assertEquals("A user with this identity document already exists", exception.getMessage());
+        verify(userPersistencePort, never()).saveUser(any());
+        verifyNoInteractions(rolePersistencePort, passwordEncoderPort);
+    }
+
+    @Test
+    void saveEmployeeWhenEmployeeRoleDoesNotExistThrowsRoleNotFoundException() {
+        UserModel user = buildUserBornOn(LocalDate.now().minusYears(30));
+        when(rolePersistencePort.getRoleByName(RoleName.EMPLOYEE))
+                .thenThrow(new RoleNotFoundException("The requested role does not exist"));
+
+        assertThrows(RoleNotFoundException.class, () -> userUseCase.saveEmployee(user));
+
+        verify(userPersistencePort, never()).saveUser(any());
+        verifyNoInteractions(passwordEncoderPort);
+    }
+
+    @Test
     void getUserByIdWhenUserExistsReturnsTheUser() {
         UserModel user = new UserModel();
         when(userPersistencePort.findUserById(1L)).thenReturn(Optional.of(user));

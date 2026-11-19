@@ -17,6 +17,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -62,6 +64,35 @@ class UserHandlerTest {
                 .thenThrow(new UserAlreadyExistsException("A user with this email already exists"));
 
         assertThrows(UserAlreadyExistsException.class, () -> userHandler.saveOwner(request));
+        verifyNoInteractions(userResponseMapper);
+    }
+
+    @Test
+    void saveEmployeeMapsRequestCallsServicePortAndReturnsMappedResponse() {
+        UserRequestDto request = new UserRequestDto();
+        UserModel modelToSave = new UserModel();
+        UserModel savedModel = new UserModel();
+        UserResponseDto expectedResponse = new UserResponseDto();
+        when(userRequestMapper.toUser(request)).thenReturn(modelToSave);
+        when(userServicePort.saveEmployee(modelToSave)).thenReturn(savedModel);
+        when(userResponseMapper.toResponse(savedModel)).thenReturn(expectedResponse);
+
+        UserResponseDto result = userHandler.saveEmployee(request);
+
+        assertSame(expectedResponse, result);
+        verify(userServicePort).saveEmployee(modelToSave);
+        verify(userServicePort, never()).saveOwner(any());
+    }
+
+    @Test
+    void saveEmployeeWhenServicePortThrowsPropagatesExceptionWithoutMappingResponse() {
+        UserRequestDto request = new UserRequestDto();
+        UserModel modelToSave = new UserModel();
+        when(userRequestMapper.toUser(request)).thenReturn(modelToSave);
+        when(userServicePort.saveEmployee(modelToSave))
+                .thenThrow(new UserAlreadyExistsException("A user with this email already exists"));
+
+        assertThrows(UserAlreadyExistsException.class, () -> userHandler.saveEmployee(request));
         verifyNoInteractions(userResponseMapper);
     }
 

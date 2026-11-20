@@ -1,5 +1,6 @@
 package com.pragma.powerup.infrastructure.input.rest;
 
+import com.pragma.powerup.application.dto.request.AccountRequestDto;
 import com.pragma.powerup.application.dto.request.UserRequestDto;
 import com.pragma.powerup.application.dto.response.UserResponseDto;
 import com.pragma.powerup.application.dto.response.UserRoleResponseDto;
@@ -163,11 +164,11 @@ class UserRestControllerTest {
         response.setLastName("Gomez");
         response.setEmail(VALID_EMAIL);
         response.setRole("EMPLOYEE");
-        when(userHandler.saveEmployee(any(UserRequestDto.class))).thenReturn(response);
+        when(userHandler.saveEmployee(any(AccountRequestDto.class))).thenReturn(response);
 
         mockMvc.perform(post(EMPLOYEES_URL)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(buildRequestJson(VALID_DOCUMENT, VALID_PHONE, VALID_EMAIL)))
+                        .content(buildEmployeeJson(VALID_DOCUMENT, VALID_PHONE, VALID_EMAIL)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.email").value(VALID_EMAIL))
                 .andExpect(jsonPath("$.role").value("EMPLOYEE"))
@@ -180,7 +181,7 @@ class UserRestControllerTest {
     void saveEmployeeWithNonNumericIdentityDocumentReturns400() throws Exception {
         mockMvc.perform(post(EMPLOYEES_URL)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(buildRequestJson("12345ABC", VALID_PHONE, VALID_EMAIL)))
+                        .content(buildEmployeeJson("12345ABC", VALID_PHONE, VALID_EMAIL)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.identityDocument").value("must contain only digits"));
 
@@ -188,7 +189,7 @@ class UserRestControllerTest {
     }
 
     @Test
-    void saveEmployeeWithEmptyBodyReturns400ReportingEveryRequiredField() throws Exception {
+    void saveEmployeeWithEmptyBodyReturns400ReportingEveryRequiredFieldButNotTheBirthDate() throws Exception {
         mockMvc.perform(post(EMPLOYEES_URL)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{}"))
@@ -197,33 +198,31 @@ class UserRestControllerTest {
                 .andExpect(jsonPath("$.lastName").exists())
                 .andExpect(jsonPath("$.identityDocument").exists())
                 .andExpect(jsonPath("$.phone").exists())
-                .andExpect(jsonPath("$.birthDate").exists())
                 .andExpect(jsonPath("$.email").exists())
-                .andExpect(jsonPath("$.password").exists());
+                .andExpect(jsonPath("$.password").exists())
+                .andExpect(jsonPath("$.birthDate").doesNotExist());
 
         verifyNoInteractions(userHandler);
     }
 
     @Test
-    void saveEmployeeWhenUserIsUnderageReturns400WithTheDomainMessage() throws Exception {
-        when(userHandler.saveEmployee(any(UserRequestDto.class)))
-                .thenThrow(new UnderageUserException("The user must be of legal age"));
+    void saveEmployeeIgnoresABirthDateSentInTheBody() throws Exception {
+        when(userHandler.saveEmployee(any(AccountRequestDto.class))).thenReturn(new UserResponseDto());
 
         mockMvc.perform(post(EMPLOYEES_URL)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(buildRequestJson(VALID_DOCUMENT, VALID_PHONE, VALID_EMAIL)))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message").value("The user must be of legal age"));
+                .andExpect(status().isCreated());
     }
 
     @Test
     void saveEmployeeWhenUserAlreadyExistsReturns409WithTheDomainMessage() throws Exception {
-        when(userHandler.saveEmployee(any(UserRequestDto.class)))
+        when(userHandler.saveEmployee(any(AccountRequestDto.class)))
                 .thenThrow(new UserAlreadyExistsException("A user with this email already exists"));
 
         mockMvc.perform(post(EMPLOYEES_URL)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(buildRequestJson(VALID_DOCUMENT, VALID_PHONE, VALID_EMAIL)))
+                        .content(buildEmployeeJson(VALID_DOCUMENT, VALID_PHONE, VALID_EMAIL)))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.message").value("A user with this email already exists"));
     }
@@ -244,12 +243,36 @@ class UserRestControllerTest {
     void saveEmployeeWithAWrongTypeReturns400WithAShortMessageAndNoInternalDetails() throws Exception {
         mockMvc.perform(post(EMPLOYEES_URL)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"name\": \"Ana\", \"birthDate\": \"not-a-date\"}"))
+                        .content("{\"name\": \"Ana\", \"phone\": {\"a\": 1}}"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("Malformed or invalid JSON request"))
                 .andExpect(jsonPath("$.trace").doesNotExist());
 
         verifyNoInteractions(userHandler);
+    }
+
+    @Test
+    void saveOwnerWithAMisspelledBirthDateReturns400WithAShortMessage() throws Exception {
+        mockMvc.perform(post(OWNERS_URL)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\": \"Ana\", \"birthDate\": \"not-a-date\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Malformed or invalid JSON request"));
+
+        verifyNoInteractions(userHandler);
+    }
+
+    private String buildEmployeeJson(String identityDocument, String phone, String email) {
+        return """
+                {
+                  "name": "Luis",
+                  "lastName": "Mesero",
+                  "identityDocument": "%s",
+                  "phone": "%s",
+                  "email": "%s",
+                  "password": "Clave12345"
+                }
+                """.formatted(identityDocument, phone, email);
     }
 
     private String buildRequestJson(String identityDocument, String phone, String email) {

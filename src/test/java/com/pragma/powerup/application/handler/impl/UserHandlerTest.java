@@ -98,6 +98,36 @@ class UserHandlerTest {
     }
 
     @Test
+    void saveClientMapsRequestCallsServicePortAndReturnsMappedResponse() {
+        AccountRequestDto request = new AccountRequestDto();
+        UserModel modelToSave = new UserModel();
+        UserModel savedModel = new UserModel();
+        UserResponseDto expectedResponse = new UserResponseDto();
+        when(userRequestMapper.toUser(request)).thenReturn(modelToSave);
+        when(userServicePort.saveClient(modelToSave)).thenReturn(savedModel);
+        when(userResponseMapper.toResponse(savedModel)).thenReturn(expectedResponse);
+
+        UserResponseDto result = userHandler.saveClient(request);
+
+        assertSame(expectedResponse, result);
+        verify(userServicePort).saveClient(modelToSave);
+        verify(userServicePort, never()).saveOwner(any());
+        verify(userServicePort, never()).saveEmployee(any());
+    }
+
+    @Test
+    void saveClientWhenServicePortThrowsPropagatesExceptionWithoutMappingResponse() {
+        AccountRequestDto request = new AccountRequestDto();
+        UserModel modelToSave = new UserModel();
+        when(userRequestMapper.toUser(request)).thenReturn(modelToSave);
+        when(userServicePort.saveClient(modelToSave))
+                .thenThrow(new UserAlreadyExistsException("A user with this email already exists"));
+
+        assertThrows(UserAlreadyExistsException.class, () -> userHandler.saveClient(request));
+        verifyNoInteractions(userResponseMapper);
+    }
+
+    @Test
     void getUserByIdCallsServicePortAndReturnsMappedRoleResponse() {
         UserModel user = new UserModel();
         UserRoleResponseDto expectedResponse = new UserRoleResponseDto();

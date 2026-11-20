@@ -220,6 +220,74 @@ class UserUseCaseTest {
     }
 
     @Test
+    void saveClientWithValidDataAssignsClientRoleAndEncodesPassword() {
+        UserModel user = buildUserBornOn(null);
+        RoleModel clientRole = new RoleModel(4L, "CLIENT", "Role CLIENT");
+        when(rolePersistencePort.getRoleByName(RoleName.CLIENT)).thenReturn(clientRole);
+        when(passwordEncoderPort.encode(RAW_PASSWORD)).thenReturn(ENCODED_PASSWORD);
+        when(userPersistencePort.saveUser(user)).thenReturn(user);
+
+        UserModel result = userUseCase.saveClient(user);
+
+        assertAll(
+                () -> assertSame(clientRole, result.getRole()),
+                () -> assertEquals(ENCODED_PASSWORD, result.getPassword())
+        );
+        verify(userPersistencePort).saveUser(user);
+    }
+
+    @Test
+    void saveClientDoesNotCheckTheLegalAge() {
+        UserModel user = buildUserBornOn(LocalDate.now().minusYears(LEGAL_AGE).plusDays(1));
+        when(rolePersistencePort.getRoleByName(RoleName.CLIENT))
+                .thenReturn(new RoleModel(4L, "CLIENT", "Role CLIENT"));
+        when(passwordEncoderPort.encode(RAW_PASSWORD)).thenReturn(ENCODED_PASSWORD);
+        when(userPersistencePort.saveUser(user)).thenReturn(user);
+
+        UserModel result = userUseCase.saveClient(user);
+
+        assertSame(user, result);
+    }
+
+    @Test
+    void saveClientWithExistingEmailThrowsUserAlreadyExistsException() {
+        UserModel user = buildUserBornOn(null);
+        when(userPersistencePort.existsByEmail(user.getEmail())).thenReturn(true);
+
+        UserAlreadyExistsException exception = assertThrows(
+                UserAlreadyExistsException.class, () -> userUseCase.saveClient(user));
+
+        assertEquals("A user with this email already exists", exception.getMessage());
+        verify(userPersistencePort, never()).saveUser(any());
+        verifyNoInteractions(rolePersistencePort, passwordEncoderPort);
+    }
+
+    @Test
+    void saveClientWithExistingIdentityDocumentThrowsUserAlreadyExistsException() {
+        UserModel user = buildUserBornOn(null);
+        when(userPersistencePort.existsByIdentityDocument(user.getIdentityDocument())).thenReturn(true);
+
+        UserAlreadyExistsException exception = assertThrows(
+                UserAlreadyExistsException.class, () -> userUseCase.saveClient(user));
+
+        assertEquals("A user with this identity document already exists", exception.getMessage());
+        verify(userPersistencePort, never()).saveUser(any());
+        verifyNoInteractions(rolePersistencePort, passwordEncoderPort);
+    }
+
+    @Test
+    void saveClientWhenClientRoleDoesNotExistThrowsRoleNotFoundException() {
+        UserModel user = buildUserBornOn(null);
+        when(rolePersistencePort.getRoleByName(RoleName.CLIENT))
+                .thenThrow(new RoleNotFoundException("The requested role does not exist"));
+
+        assertThrows(RoleNotFoundException.class, () -> userUseCase.saveClient(user));
+
+        verify(userPersistencePort, never()).saveUser(any());
+        verifyNoInteractions(passwordEncoderPort);
+    }
+
+    @Test
     void getUserByIdWhenUserExistsReturnsTheUser() {
         UserModel user = new UserModel();
         when(userPersistencePort.findUserById(1L)).thenReturn(Optional.of(user));

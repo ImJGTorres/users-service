@@ -58,6 +58,20 @@ public class UserRestController {
         return ResponseEntity.status(HttpStatus.CREATED).body(userHandler.saveEmployee(accountRequestDto));
     }
 
+    @Operation(summary = "Register a client account (public, no token needed)")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Client created",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = UserResponseDto.class))),
+            @ApiResponse(responseCode = "400", description = "Invalid data", content = @Content),
+            @ApiResponse(responseCode = "409", description = "Email or identity document already registered",
+                    content = @Content)
+    })
+    @PostMapping("/clients")
+    public ResponseEntity<UserResponseDto> saveClient(@Valid @RequestBody AccountRequestDto accountRequestDto) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(userHandler.saveClient(accountRequestDto));
+    }
+
     @Operation(summary = "Get the id and role of a user")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "User found",

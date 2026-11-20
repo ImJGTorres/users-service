@@ -155,8 +155,8 @@ class UserUseCaseTest {
     }
 
     @Test
-    void saveEmployeeTurningExactlyLegalAgeIsAccepted() {
-        UserModel user = buildUserBornOn(LocalDate.now().minusYears(LEGAL_AGE));
+    void saveEmployeeWithoutBirthDateIsAcceptedBecauseOnlyOwnersNeedOne() {
+        UserModel user = buildUserBornOn(null);
         when(rolePersistencePort.getRoleByName(RoleName.EMPLOYEE))
                 .thenReturn(new RoleModel(3L, "EMPLOYEE", "Role EMPLOYEE"));
         when(passwordEncoderPort.encode(RAW_PASSWORD)).thenReturn(ENCODED_PASSWORD);
@@ -165,15 +165,20 @@ class UserUseCaseTest {
         UserModel result = userUseCase.saveEmployee(user);
 
         assertSame(user, result);
+        verify(userPersistencePort).saveUser(user);
     }
 
     @Test
-    void saveEmployeeOneDayBeforeLegalAgeThrowsUnderageUserException() {
+    void saveEmployeeDoesNotCheckTheLegalAge() {
         UserModel user = buildUserBornOn(LocalDate.now().minusYears(LEGAL_AGE).plusDays(1));
+        when(rolePersistencePort.getRoleByName(RoleName.EMPLOYEE))
+                .thenReturn(new RoleModel(3L, "EMPLOYEE", "Role EMPLOYEE"));
+        when(passwordEncoderPort.encode(RAW_PASSWORD)).thenReturn(ENCODED_PASSWORD);
+        when(userPersistencePort.saveUser(user)).thenReturn(user);
 
-        assertThrows(UnderageUserException.class, () -> userUseCase.saveEmployee(user));
-        verify(userPersistencePort, never()).saveUser(any());
-        verifyNoInteractions(rolePersistencePort, passwordEncoderPort);
+        UserModel result = userUseCase.saveEmployee(user);
+
+        assertSame(user, result);
     }
 
     @Test

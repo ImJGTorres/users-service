@@ -1,5 +1,6 @@
 package com.pragma.powerup.infrastructure.input.rest;
 
+import com.pragma.powerup.application.dto.request.AccountRequestDto;
 import com.pragma.powerup.application.dto.request.UserRequestDto;
 import com.pragma.powerup.application.dto.response.UserResponseDto;
 import com.pragma.powerup.application.dto.response.UserRoleResponseDto;
@@ -46,15 +47,15 @@ public class UserRestController {
             @ApiResponse(responseCode = "201", description = "Employee created",
                     content = @Content(mediaType = "application/json",
                             schema = @Schema(implementation = UserResponseDto.class))),
-            @ApiResponse(responseCode = "400", description = "Invalid data or underage user", content = @Content),
+            @ApiResponse(responseCode = "400", description = "Invalid data", content = @Content),
             @ApiResponse(responseCode = "401", description = "Missing or invalid token", content = @Content),
             @ApiResponse(responseCode = "403", description = "Only an owner can create employees", content = @Content),
             @ApiResponse(responseCode = "409", description = "Email or identity document already registered",
                     content = @Content)
     })
     @PostMapping("/employees")
-    public ResponseEntity<UserResponseDto> saveEmployee(@Valid @RequestBody UserRequestDto userRequestDto) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(userHandler.saveEmployee(userRequestDto));
+    public ResponseEntity<UserResponseDto> saveEmployee(@Valid @RequestBody AccountRequestDto accountRequestDto) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(userHandler.saveEmployee(accountRequestDto));
     }
 
     @Operation(summary = "Get the id and role of a user")

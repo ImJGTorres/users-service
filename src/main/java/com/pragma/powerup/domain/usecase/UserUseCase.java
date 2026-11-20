@@ -44,6 +44,11 @@ public class UserUseCase implements IUserServicePort {
     }
 
     @Override
+    public UserModel saveClient(UserModel userModel) {
+        return saveUserWithRole(userModel, RoleName.CLIENT);
+    }
+
+    @Override
     public UserModel getUserById(Long id) {
         return userPersistencePort.findUserById(id)
                 .orElseThrow(() -> new UserNotFoundException(USER_NOT_FOUND_MESSAGE));

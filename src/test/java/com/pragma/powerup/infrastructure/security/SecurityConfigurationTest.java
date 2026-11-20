@@ -32,6 +32,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class SecurityConfigurationTest {
     private static final String OWNERS_URL = "/api/v1/owners";
     private static final String EMPLOYEES_URL = "/api/v1/employees";
+    private static final String CLIENTS_URL = "/api/v1/clients";
     private static final String USER_URL = "/api/v1/users/1";
     private static final String LOGIN_URL = "/api/v1/auth/login";
     private static final String AUTHORIZATION = "Authorization";
@@ -131,6 +132,50 @@ class SecurityConfigurationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{}"))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void postClientsWithoutTokenIsPublicAndReachesTheValidation() throws Exception {
+        mockMvc.perform(post(CLIENTS_URL)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void postClientsWithAnInvalidTokenIsStillPublicAndDoesNotReturn401() throws Exception {
+        mockMvc.perform(post(CLIENTS_URL)
+                        .header(AUTHORIZATION, "Bearer not-a-token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void postClientsWithAnyValidTokenReachesTheValidation() throws Exception {
+        mockMvc.perform(post(CLIENTS_URL)
+                        .header(AUTHORIZATION, bearerTokenFor("CLIENT"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void postOwnersWithClientTokenReturns403() throws Exception {
+        mockMvc.perform(post(OWNERS_URL)
+                        .header(AUTHORIZATION, bearerTokenFor("CLIENT"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void postEmployeesWithClientTokenReturns403() throws Exception {
+        mockMvc.perform(post(EMPLOYEES_URL)
+                        .header(AUTHORIZATION, bearerTokenFor("CLIENT"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isForbidden());
     }
 
     @Test

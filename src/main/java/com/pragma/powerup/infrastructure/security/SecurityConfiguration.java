@@ -14,6 +14,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @Configuration
 public class SecurityConfiguration {
     private static final String LOGIN_URL = "/api/v1/auth/login";
+    private static final String CLIENTS_URL = "/api/v1/clients";
     private static final String OWNERS_URL = "/api/v1/owners";
     private static final String EMPLOYEES_URL = "/api/v1/employees";
     private static final String ERROR_URL = "/error";
@@ -28,6 +29,7 @@ public class SecurityConfiguration {
                         .accessDeniedHandler(new JsonAccessDeniedHandler()))
                 .authorizeHttpRequests(requests -> requests
                         .requestMatchers(HttpMethod.POST, LOGIN_URL).permitAll()
+                        .requestMatchers(HttpMethod.POST, CLIENTS_URL).permitAll()
                         .requestMatchers(SWAGGER_URLS).permitAll()
                         .requestMatchers(ERROR_URL).permitAll()
                         .requestMatchers(HttpMethod.POST, OWNERS_URL).hasRole(RoleName.ADMIN.name())

@@ -35,6 +35,7 @@ class UserRestControllerTest {
 
     private static final String OWNERS_URL = "/api/v1/owners";
     private static final String EMPLOYEES_URL = "/api/v1/employees";
+    private static final String CLIENTS_URL = "/api/v1/clients";
     private static final String USER_BY_ID_URL = "/api/v1/users/{id}";
     private static final String VALID_DOCUMENT = "1234567890";
     private static final String VALID_PHONE = "+573005698325";
@@ -221,6 +222,91 @@ class UserRestControllerTest {
                 .thenThrow(new UserAlreadyExistsException("A user with this email already exists"));
 
         mockMvc.perform(post(EMPLOYEES_URL)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(buildEmployeeJson(VALID_DOCUMENT, VALID_PHONE, VALID_EMAIL)))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message").value("A user with this email already exists"));
+    }
+
+    @Test
+    void saveClientWithValidRequestReturns201AndTheCreatedClientWithoutPassword() throws Exception {
+        UserResponseDto response = new UserResponseDto();
+        response.setName("Luis");
+        response.setEmail(VALID_EMAIL);
+        response.setRole("CLIENT");
+        when(userHandler.saveClient(any(AccountRequestDto.class))).thenReturn(response);
+
+        mockMvc.perform(post(CLIENTS_URL)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(buildEmployeeJson(VALID_DOCUMENT, VALID_PHONE, VALID_EMAIL)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.email").value(VALID_EMAIL))
+                .andExpect(jsonPath("$.role").value("CLIENT"))
+                .andExpect(jsonPath("$.password").doesNotExist());
+
+        verify(userHandler, never()).saveOwner(any());
+        verify(userHandler, never()).saveEmployee(any());
+    }
+
+    @Test
+    void saveClientWithNonNumericIdentityDocumentReturns400() throws Exception {
+        mockMvc.perform(post(CLIENTS_URL)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(buildEmployeeJson("12345ABC", VALID_PHONE, VALID_EMAIL)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.identityDocument").value("must contain only digits"));
+
+        verifyNoInteractions(userHandler);
+    }
+
+    @Test
+    void saveClientWithEmptyBodyReturns400ReportingEveryRequiredFieldButNotTheBirthDate() throws Exception {
+        mockMvc.perform(post(CLIENTS_URL)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.name").exists())
+                .andExpect(jsonPath("$.lastName").exists())
+                .andExpect(jsonPath("$.identityDocument").exists())
+                .andExpect(jsonPath("$.phone").exists())
+                .andExpect(jsonPath("$.email").exists())
+                .andExpect(jsonPath("$.password").exists())
+                .andExpect(jsonPath("$.birthDate").doesNotExist());
+
+        verifyNoInteractions(userHandler);
+    }
+
+    @Test
+    void saveClientIgnoresARoleSentInTheBodySoNobodyCanRegisterAsAdmin() throws Exception {
+        when(userHandler.saveClient(any(AccountRequestDto.class))).thenReturn(new UserResponseDto());
+
+        mockMvc.perform(post(CLIENTS_URL)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "name": "Luis",
+                                  "lastName": "Cliente",
+                                  "identityDocument": "1234567890",
+                                  "phone": "+573005698325",
+                                  "email": "luis@correo.com",
+                                  "password": "Clave12345",
+                                  "role": "ADMIN",
+                                  "roleId": 1
+                                }
+                                """))
+                .andExpect(status().isCreated());
+
+        verify(userHandler).saveClient(any(AccountRequestDto.class));
+        verify(userHandler, never()).saveOwner(any());
+        verify(userHandler, never()).saveEmployee(any());
+    }
+
+    @Test
+    void saveClientWhenUserAlreadyExistsReturns409WithTheDomainMessage() throws Exception {
+        when(userHandler.saveClient(any(AccountRequestDto.class)))
+                .thenThrow(new UserAlreadyExistsException("A user with this email already exists"));
+
+        mockMvc.perform(post(CLIENTS_URL)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(buildEmployeeJson(VALID_DOCUMENT, VALID_PHONE, VALID_EMAIL)))
                 .andExpect(status().isConflict())

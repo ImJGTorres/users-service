@@ -1,5 +1,6 @@
 package com.pragma.powerup.application.handler.impl;
 
+import com.pragma.powerup.application.dto.request.AccountRequestDto;
 import com.pragma.powerup.application.dto.request.UserRequestDto;
 import com.pragma.powerup.application.dto.response.UserResponseDto;
 import com.pragma.powerup.application.dto.response.UserRoleResponseDto;
@@ -69,7 +70,7 @@ class UserHandlerTest {
 
     @Test
     void saveEmployeeMapsRequestCallsServicePortAndReturnsMappedResponse() {
-        UserRequestDto request = new UserRequestDto();
+        AccountRequestDto request = new AccountRequestDto();
         UserModel modelToSave = new UserModel();
         UserModel savedModel = new UserModel();
         UserResponseDto expectedResponse = new UserResponseDto();
@@ -86,7 +87,7 @@ class UserHandlerTest {
 
     @Test
     void saveEmployeeWhenServicePortThrowsPropagatesExceptionWithoutMappingResponse() {
-        UserRequestDto request = new UserRequestDto();
+        AccountRequestDto request = new AccountRequestDto();
         UserModel modelToSave = new UserModel();
         when(userRequestMapper.toUser(request)).thenReturn(modelToSave);
         when(userServicePort.saveEmployee(modelToSave))

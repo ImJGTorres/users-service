@@ -34,6 +34,7 @@ public class UserUseCase implements IUserServicePort {
 
     @Override
     public UserModel saveOwner(UserModel userModel) {
+        validateLegalAge(userModel.getBirthDate());
         return saveUserWithRole(userModel, RoleName.OWNER);
     }
 
@@ -49,7 +50,6 @@ public class UserUseCase implements IUserServicePort {
     }
 
     private UserModel saveUserWithRole(UserModel userModel, RoleName roleName) {
-        validateLegalAge(userModel.getBirthDate());
         validateUniqueness(userModel);
         userModel.setRole(rolePersistencePort.getRoleByName(roleName));
         userModel.setPassword(passwordEncoderPort.encode(userModel.getPassword()));

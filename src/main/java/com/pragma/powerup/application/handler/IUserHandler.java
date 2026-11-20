@@ -10,5 +10,7 @@ public interface IUserHandler {
 
     UserResponseDto saveEmployee(AccountRequestDto accountRequestDto);
 
+    UserResponseDto saveClient(AccountRequestDto accountRequestDto);
+
     UserRoleResponseDto getUserById(Long id);
 }
